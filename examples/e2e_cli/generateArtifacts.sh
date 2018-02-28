@@ -9,7 +9,7 @@
 #set -e
 
 CHANNEL_NAME=$1
-: ${CHANNEL_NAME:="mychannel"}
+: ${CHANNEL_NAME:="productivist"}
 echo $CHANNEL_NAME
 
 export FABRIC_ROOT=$PWD/../..
@@ -30,11 +30,11 @@ function replacePrivateKey () {
 	cp docker-compose-e2e-template.yaml docker-compose-e2e.yaml
 
         CURRENT_DIR=$PWD
-        cd crypto-config/peerOrganizations/org1.example.com/ca/
+        cd crypto-config/peerOrganizations/private.productivist.com/ca/
         PRIV_KEY=$(ls *_sk)
         cd $CURRENT_DIR
         sed $OPTS "s/CA1_PRIVATE_KEY/${PRIV_KEY}/g" docker-compose-e2e.yaml
-        cd crypto-config/peerOrganizations/org2.example.com/ca/
+        cd crypto-config/peerOrganizations/public.productivist.com/ca/
         PRIV_KEY=$(ls *_sk)
         cd $CURRENT_DIR
         sed $OPTS "s/CA2_PRIVATE_KEY/${PRIV_KEY}/g" docker-compose-e2e.yaml
@@ -79,22 +79,22 @@ function generateChannelArtifacts() {
 
 	echo
 	echo "#################################################################"
-	echo "### Generating channel configuration transaction 'channel.tx' ###"
+	echo "### Generating private configuration transaction '$CHANNEL_NAME' ###"
 	echo "#################################################################"
 	$CONFIGTXGEN -profile TwoOrgsChannel -outputCreateChannelTx ./channel-artifacts/channel.tx -channelID $CHANNEL_NAME
 
-	echo
-	echo "#################################################################"
-	echo "#######    Generating anchor peer update for Org1MSP   ##########"
-	echo "#################################################################"
-	$CONFIGTXGEN -profile TwoOrgsChannel -outputAnchorPeersUpdate ./channel-artifacts/Org1MSPanchors.tx -channelID $CHANNEL_NAME -asOrg Org1MSP
+	# echo
+	# echo "#################################################################"
+	# echo "#######    Generating anchor peer update for Org1MSP   ##########"
+	# echo "#################################################################"
+	# $CONFIGTXGEN -profile TwoOrgsChannel -outputAnchorPeersUpdate ./channel-artifacts/Org1MSPanchors.tx -channelID $CHANNEL_NAME -asOrg Org1MSP
 
-	echo
-	echo "#################################################################"
-	echo "#######    Generating anchor peer update for Org2MSP   ##########"
-	echo "#################################################################"
-	$CONFIGTXGEN -profile TwoOrgsChannel -outputAnchorPeersUpdate ./channel-artifacts/Org2MSPanchors.tx -channelID $CHANNEL_NAME -asOrg Org2MSP
-	echo
+	# echo
+	# echo "#################################################################"
+	# echo "#######    Generating anchor peer update for Org2MSP   ##########"
+	# echo "#################################################################"
+	# $CONFIGTXGEN -profile TwoOrgsChannel -outputAnchorPeersUpdate ./channel-artifacts/Org2MSPanchors.tx -channelID $CHANNEL_NAME -asOrg Org2MSP
+	# echo
 }
 
 generateCerts

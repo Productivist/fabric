@@ -28,8 +28,8 @@ function validateArgs () {
 		exit 1
 	fi
 	if [ -z "${CH_NAME}" ]; then
-		echo "setting to default channel 'mychannel'"
-		CH_NAME=mychannel
+		echo "setting to default channel 'productivist'"
+		CH_NAME=productivist
 	fi
 }
 
