@@ -11,6 +11,11 @@
 CHANNEL_NAME=$1
 : ${CHANNEL_NAME:="productivist"}
 echo $CHANNEL_NAME
+CH_PRIVATE="private"
+[ "$2" ] && CH_PRIVATE="$2"
+CH_PUBLIC="public"
+[ "$3" ] && CH_PUBLIC="$3"
+
 
 export FABRIC_ROOT=$PWD/../..
 export FABRIC_CFG_PATH=$PWD
@@ -78,10 +83,12 @@ function generateChannelArtifacts() {
 	$CONFIGTXGEN -profile TwoOrgsOrdererGenesis -outputBlock ./channel-artifacts/genesis.block
 
 	echo
-	echo "#################################################################"
+	echo "####################################################################"
 	echo "### Generating private configuration transaction '$CHANNEL_NAME' ###"
-	echo "#################################################################"
-	$CONFIGTXGEN -profile TwoOrgsChannel -outputCreateChannelTx ./channel-artifacts/channel.tx -channelID $CHANNEL_NAME
+	echo "####################################################################"
+	# $CONFIGTXGEN -profile TwoOrgsChannel -outputCreateChannelTx ./channel-artifacts/channel.tx -channelID $CHANNEL_NAME
+	$CONFIGTXGEN -profile PrivateChannel -outputCreateChannelTx ./channel-artifacts/$CH_PRIVATE.tx -channelID $CH_PRIVATE
+	$CONFIGTXGEN -profile PublicChannel -outputCreateChannelTx ./channel-artifacts/$CH_PUBLIC.tx -channelID $CH_PUBLIC
 
 	# echo
 	# echo "#################################################################"

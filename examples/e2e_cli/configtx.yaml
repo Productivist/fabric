@@ -28,6 +28,25 @@ Profiles:
                 Organizations:
                     - *Private
                     - *Public
+
+    PrivateChannel:
+        Consortium: SampleConsortium
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *Private
+            Capabilities:
+                <<: *ApplicationCapabilities
+
+    PublicChannel:
+        Consortium: SampleConsortium
+        Application:
+            <<: *ApplicationDefaults
+            Organizations:
+                - *Public
+            Capabilities:
+                <<: *ApplicationCapabilities
+
     TwoOrgsChannel:
         Consortium: SampleConsortium
         Application:
@@ -64,7 +83,7 @@ Organizations:
     - &Private
         # DefaultOrg defines the organization which is used in the sampleconfig
         # of the fabric.git development environment
-        Name: PrivateMSP
+        Name: Private
 
         # ID to load the MSP definition as
         ID: PrivateMSP
@@ -81,7 +100,7 @@ Organizations:
     - &Public
         # DefaultOrg defines the organization which is used in the sampleconfig
         # of the fabric.git development environment
-        Name: PublicMSP
+        Name: Public
 
         # ID to load the MSP definition as
         ID: PublicMSP

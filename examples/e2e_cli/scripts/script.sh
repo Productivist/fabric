@@ -30,8 +30,8 @@ verifyResult () {
 }
 
 setGlobals () {
-
 	if [ $1 -eq 0 -o $1 -eq 1 ] ; then
+		CHANNEL=private
 		CORE_PEER_LOCALMSPID="PrivateMSP"
 		CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/private.productivist.com/peers/peer0.private.productivist.com/tls/ca.crt
 		CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/private.productivist.com/users/Admin@private.productivist.com/msp
@@ -41,6 +41,7 @@ setGlobals () {
 			CORE_PEER_ADDRESS=peer1.private.productivist.com:7051
 		fi
 	else
+		CHANNEL=public
 		CORE_PEER_LOCALMSPID="PublicMSP"
 		CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/public.productivist.com/peers/peer0.public.productivist.com/tls/ca.crt
 		CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/public.productivist.com/users/Admin@public.productivist.com/msp
@@ -84,24 +85,25 @@ checkOSNAvailability() {
 }
 
 createChannel() {
-	setGlobals 0
+	PEER=$1
+	setGlobals $PEER
 	if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
-		peer channel create -o orderer.productivist.com:7050 -c $CHANNEL_NAME -f ./channel-artifacts/channel.tx >&log.txt
+		peer channel create -o orderer.productivist.com:7050 -c $CHANNEL -f ./channel-artifacts/$CHANNEL.tx >&log.txt
 	else
-		peer channel create -o orderer.productivist.com:7050 -c $CHANNEL_NAME -f ./channel-artifacts/channel.tx --tls --cafile $ORDERER_CA >&log.txt
+		peer channel create -o orderer.productivist.com:7050 -c $CHANNEL -f ./channel-artifacts/$CHANNEL.tx --tls --cafile $ORDERER_CA >&log.txt
 	fi
 	res=$?
 	cat log.txt
 	verifyResult $res "Channel creation failed"
-	echo "===================== Channel \"$CHANNEL_NAME\" is created successfully ===================== "
+	echo "===================== Channel \"$CHANNEL\" is created successfully ===================== "
 	echo
 }
 
 updateAnchorPeers() {
-        PEER=$1
-        setGlobals $PEER
+    PEER=$1
+    setGlobals $PEER
 
-        if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
+    if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
 		peer channel update -o orderer.productivist.com:7050 -c $CHANNEL_NAME -f ./channel-artifacts/${CORE_PEER_LOCALMSPID}anchors.tx >&log.txt
 	else
 		peer channel update -o orderer.productivist.com:7050 -c $CHANNEL_NAME -f ./channel-artifacts/${CORE_PEER_LOCALMSPID}anchors.tx --tls --cafile $ORDERER_CA >&log.txt
@@ -116,7 +118,7 @@ updateAnchorPeers() {
 
 ## Sometimes Join takes time hence RETRY atleast for 5 times
 joinWithRetry () {
-	peer channel join -b $CHANNEL_NAME.block  >&log.txt
+	peer channel join -b $CHANNEL.block  >&log.txt
 	res=$?
 	cat log.txt
 	if [ $res -ne 0 -a $COUNTER -lt $MAX_RETRY ]; then
@@ -131,11 +133,10 @@ joinWithRetry () {
 }
 
 joinChannel () {
-	for ch in 0 1; do
-	# for ch in 0 1 2 3; do
+	for ch in 0 1 2 3; do
 		setGlobals $ch
 		joinWithRetry $ch
-		echo "===================== PEER$ch joined on the channel \"$CHANNEL_NAME\" ===================== "
+		echo "===================== PEER$ch joined on the channel \"$CHANNEL\" ===================== "
 		sleep 2
 		echo
 	done
@@ -158,21 +159,21 @@ instantiateChaincode () {
 	# while 'peer chaincode' command can get the orderer endpoint from the peer (if join was successful),
 	# lets supply it directly as we know it using the "-o" option
 	if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
-		peer chaincode instantiate -o orderer.productivist.com:7050 -C $CHANNEL_NAME -n mycc -v 1.0 -c '{"Args":["init","a","100","b","200"]}' -P "OR	('PrivateMSP.member','PublicMSP.member')" >&log.txt
+		peer chaincode instantiate -o orderer.productivist.com:7050 -C $CHANNEL -n mycc -v 1.0 -c '{"Args":["init","a","100","b","200"]}' -P "OR	('PrivateMSP.member','PublicMSP.member')" >&log.txt
 	else
-		# peer chaincode instantiate -o orderer.productivist.com:7050 --tls --cafile $ORDERER_CA -C $CHANNEL_NAME -n mycc -v 1.0 -c '{"Args":["init","a","100","b","200"]}' -P "OR	('PrivateMSP.member','PublicMSP.member')" >&log.txt
-		peer chaincode instantiate -o orderer.productivist.com:7050 --tls --cafile $ORDERER_CA -C $CHANNEL_NAME -n mycc -v 1.0 -c '{"Args":["init","a","100","b","200"]}' >&log.txt
+		# peer chaincode instantiate -o orderer.productivist.com:7050 --tls --cafile $ORDERER_CA -C $CHANNEL -n mycc -v 1.0 -c '{"Args":["init","a","100","b","200"]}' -P "OR	('PrivateMSP.member','PublicMSP.member')" >&log.txt
+		peer chaincode instantiate -o orderer.productivist.com:7050 --tls --cafile $ORDERER_CA -C $CHANNEL -n mycc -v 1.0 -c '{"Args":["init","a","100","b","200"]}' >&log.txt
 	fi
 	res=$?
 	cat log.txt
-	verifyResult $res "Chaincode instantiation on PEER$PEER on channel '$CHANNEL_NAME' failed"
-	echo "===================== Chaincode Instantiation on PEER$PEER on channel '$CHANNEL_NAME' is successful ===================== "
+	verifyResult $res "Chaincode instantiation on PEER$PEER on channel '$CHANNEL' failed"
+	echo "===================== Chaincode Instantiation on PEER$PEER on channel '$CHANNEL' is successful ===================== "
 	echo
 }
 
 chaincodeQuery () {
   PEER=$1
-  echo "===================== Querying on PEER$PEER on channel '$CHANNEL_NAME'... ===================== "
+  echo "===================== Querying on PEER$PEER on channel '$CHANNEL'... ===================== "
   setGlobals $PEER
   local rc=1
   local starttime=$(date +%s)
@@ -183,14 +184,14 @@ chaincodeQuery () {
   do
      sleep 3
      echo "Attempting to Query PEER$PEER ...$(($(date +%s)-starttime)) secs"
-     peer chaincode query -C $CHANNEL_NAME -n mycc -c '{"Args":["query","a"]}' >&log.txt
+     peer chaincode query -C $CHANNEL -n mycc -c '{"Args":["query","a"]}' >&log.txt
      test $? -eq 0 && VALUE=$(cat log.txt | awk '/Query Result/ {print $NF}')
      test "$VALUE" = "$2" && let rc=0
   done
   echo
   cat log.txt
   if test $rc -eq 0 ; then
-	echo "===================== Query on PEER$PEER on channel '$CHANNEL_NAME' is successful ===================== "
+	echo "===================== Query on PEER$PEER on channel '$CHANNEL' is successful ===================== "
   else
 	echo "!!!!!!!!!!!!!!! Query result on PEER$PEER is INVALID !!!!!!!!!!!!!!!!"
         echo "================== ERROR !!! FAILED to execute End-2-End Scenario =================="
@@ -205,14 +206,14 @@ chaincodeInvoke () {
 	# while 'peer chaincode' command can get the orderer endpoint from the peer (if join was successful),
 	# lets supply it directly as we know it using the "-o" option
 	if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
-		peer chaincode invoke -o orderer.productivist.com:7050 -C $CHANNEL_NAME -n mycc -c '{"Args":["invoke","a","b","10"]}' >&log.txt
+		peer chaincode invoke -o orderer.productivist.com:7050 -C $CHANNEL -n mycc -c '{"Args":["invoke","a","b","10"]}' >&log.txt
 	else
-		peer chaincode invoke -o orderer.productivist.com:7050  --tls --cafile $ORDERER_CA -C $CHANNEL_NAME -n mycc -c '{"Args":["invoke","a","b","10"]}' >&log.txt
+		peer chaincode invoke -o orderer.productivist.com:7050  --tls --cafile $ORDERER_CA -C $CHANNEL -n mycc -c '{"Args":["invoke","a","b","10"]}' >&log.txt
 	fi
 	res=$?
 	cat log.txt
 	verifyResult $res "Invoke execution on PEER$PEER failed "
-	echo "===================== Invoke transaction on PEER$PEER on channel '$CHANNEL_NAME' is successful ===================== "
+	echo "===================== Invoke transaction on PEER$PEER on channel '$CHANNEL' is successful ===================== "
 	echo
 }
 
@@ -220,9 +221,13 @@ chaincodeInvoke () {
 echo "Check orderering service availability..."
 checkOSNAvailability
 
-## Create channel
-echo "Creating channel..."
-createChannel
+## Create channel private
+echo "Creating channel private..."
+createChannel 0
+
+## Create channel private
+echo "Creating channel public..."
+createChannel 2
 
 ## Join all the peers to the channel
 echo "Having all peers join the channel..."
@@ -237,17 +242,10 @@ joinChannel
 ## Install chaincode on Peer0/private
 echo "Installing chaincode on private/peer0..."
 installChaincode 0
-# echo "Install chaincode on public/peer2..."
-# installChaincode 2
 
 #Instantiate chaincode on Peer0/private
 echo "Installing chaincode on private/peer0..."
-# echo "Instantiating chaincode on Peer0/private..."
 instantiateChaincode 0
-
-#Instantiate chaincode on Peer2/public
-# echo "Instantiating chaincode on public/peer2..."
-# instantiateChaincode 2
 
 #Query on chaincode on Peer0/private
 echo "Querying chaincode on private/peer0..."
@@ -264,6 +262,32 @@ installChaincode 1
 #Query on chaincode on Peer0/private, check if the result is 90
 echo "Querying chaincode on private/peer0..."
 chaincodeQuery 1 90
+
+#############################################################
+
+## Install chaincode on Peer2/public
+echo "Installing chaincode on public/peer2..."
+installChaincode 2
+
+# Instantiate chaincode on Peer2/public
+echo "Instantiating chaincode on public/peer2..."
+instantiateChaincode 2
+
+#Query on chaincode on Peer2/public
+echo "Querying chaincode on public/peer2..."
+chaincodeQuery 2 100
+
+#Invoke on chaincode on Peer2/public
+echo "Sending invoke transaction on public/peer2..."
+chaincodeInvoke 2
+
+## Install chaincode on Peer3/public
+echo "Installing chaincode on public/peer3..."
+installChaincode 3
+
+#Query on chaincode on Peer3/public, check if the result is 90
+echo "Querying chaincode on public/peer3..."
+chaincodeQuery 3 90
 
 echo
 echo "===================== All GOOD, End-2-End execution completed ===================== "
