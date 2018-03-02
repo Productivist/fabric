@@ -86,22 +86,22 @@ function generateChannelArtifacts() {
 	echo "####################################################################"
 	echo "### Generating private configuration transaction '$CHANNEL_NAME' ###"
 	echo "####################################################################"
-	# $CONFIGTXGEN -profile TwoOrgsChannel -outputCreateChannelTx ./channel-artifacts/channel.tx -channelID $CHANNEL_NAME
+	$CONFIGTXGEN -profile TwoOrgsChannel -outputCreateChannelTx ./channel-artifacts/$CHANNEL_NAME.tx -channelID $CHANNEL_NAME
 	$CONFIGTXGEN -profile PrivateChannel -outputCreateChannelTx ./channel-artifacts/$CH_PRIVATE.tx -channelID $CH_PRIVATE
 	$CONFIGTXGEN -profile PublicChannel -outputCreateChannelTx ./channel-artifacts/$CH_PUBLIC.tx -channelID $CH_PUBLIC
 
-	# echo
-	# echo "#################################################################"
-	# echo "#######    Generating anchor peer update for Org1MSP   ##########"
-	# echo "#################################################################"
-	# $CONFIGTXGEN -profile TwoOrgsChannel -outputAnchorPeersUpdate ./channel-artifacts/Org1MSPanchors.tx -channelID $CHANNEL_NAME -asOrg Org1MSP
+	echo
+	echo "####################################################################"
+	echo "#######    Generating anchor peer update for PrivateMSP   ##########"
+	echo "####################################################################"
+	$CONFIGTXGEN -profile TwoOrgsChannel -outputAnchorPeersUpdate ./channel-artifacts/PrivateMSPanchors.tx -channelID $CHANNEL_NAME -asOrg Private
 
-	# echo
-	# echo "#################################################################"
-	# echo "#######    Generating anchor peer update for Org2MSP   ##########"
-	# echo "#################################################################"
-	# $CONFIGTXGEN -profile TwoOrgsChannel -outputAnchorPeersUpdate ./channel-artifacts/Org2MSPanchors.tx -channelID $CHANNEL_NAME -asOrg Org2MSP
-	# echo
+	echo
+	echo "###################################################################"
+	echo "#######    Generating anchor peer update for PublicMSP   ##########"
+	echo "###################################################################"
+	$CONFIGTXGEN -profile TwoOrgsChannel -outputAnchorPeersUpdate ./channel-artifacts/PublicMSPanchors.tx -channelID $CHANNEL_NAME -asOrg Public
+	echo
 }
 
 generateCerts
