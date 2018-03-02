@@ -69,7 +69,8 @@ function networkUp () {
 	echo "ERROR !!!! Unable to pull the images "
 	exit 1
     fi
-    docker logs -f cli
+    exit 1
+    # docker logs -f cli
 }
 
 function networkDown () {
