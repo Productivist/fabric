@@ -304,3 +304,21 @@ CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypt
 
 peer channel fetch newest -o orderer.productivist.com:7050 -c "testchainid" --tls --cafile $ORDERER_CA
 ```
+
+## Stop an and clean everything
+
+### Check what's up
+```
+watch 'docker ps -a && docker images'
+```
+
+### Stop the network
+```
+./network_setup.sh down
+```
+
+### clean the remaining docker network
+```
+docker network prune
+```
+
