@@ -23,7 +23,7 @@ export PATH=$PWD/bin:$PATH
 ## Productivist
 ### Go to 
 ```
-cd fabric/examples/e2e_cli
+cd fabric/examples/productivist
 ```
 
 ### Start the network
