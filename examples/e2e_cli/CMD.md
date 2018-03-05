@@ -322,3 +322,7 @@ watch 'docker ps -a && docker images'
 docker network prune
 ```
 
+## Use couchDB
+```
+./network_setup.sh up prductivist 10000 couchdb
+```
